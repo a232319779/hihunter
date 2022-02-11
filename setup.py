@@ -18,7 +18,7 @@ def do_setup(**kwargs):
 
 
 long_description = '''
-`hihunter`是一个样本搬运整理平台。
+`hihunter`是一个样本搬运、整理、初识工具。
 
 ## 安装
 
@@ -39,7 +39,6 @@ $ pip install hihunter
 * run_rs_download_screenshot：获取奇安信红雨滴沙箱样本运行截图
 * run_create_table：初始化数据库表
 
-```
 '''
 
 do_setup(
