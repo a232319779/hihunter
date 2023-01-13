@@ -183,7 +183,7 @@ class HiHunterDB:
             return []
     
     def get_mb_sha1s(self, file_type, limit=1):
-        data = self.session_maker.query(HiHunterVTDatas.sha1).filter(HiHunterVTDatas.positive >= 5, HiHunterVTDatas.virustotal_status == 0, HiHunterVTDatas.type == file_type).order_by(HiHunterVTDatas.id.desc()).limit(limit)
+        data = self.session_maker.query(HiHunterVTDatas.sha1).filter(HiHunterVTDatas.positive >= 5, HiHunterVTDatas.virustotal_status == 0, HiHunterVTDatas.type == file_type, HiHunterVTDatas.size < 1 * 1024 * 1024).order_by(HiHunterVTDatas.id.desc()).limit(limit)
         if data:
             return [d[0] for d in data]
         else:

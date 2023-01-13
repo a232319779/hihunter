@@ -33,7 +33,8 @@ $ pip install hihunter
 * run_vt_filter：从VT过滤样本，过滤规则写在配置文件中
 * run_vt_usage：VT api使用数据统计
 * run_vt_download：VT 样本下载
-* run_mb_upload：共享样本至MalwareBazaar
+* run_mb_upload：自动共享样本至MalwareBazaar
+* run_mb_upload2：手动共享样本至MalwareBazaar
 * run_rs_upload：投递样本至奇安信红雨滴沙箱
 * run_rs_update：获取奇安信红雨滴沙箱报告并更新
 * run_rs_download_screenshot：获取奇安信红雨滴沙箱样本运行截图
@@ -57,6 +58,7 @@ do_setup(
             "hihunter-vt-usage = hihunter.run:run_vt_usage",
             "hihunter-vt-download = hihunter.run:run_vt_download",
             "hihunter-mb-upload = hihunter.run:run_mb_upload",
+            "hihunter-mb-upload2 = hihunter.run:run_mb_upload2",
             "hihunter-rs-upload = hihunter.run:run_rs_upload",
             "hihunter-rs-update = hihunter.run:run_rs_update",
             "hihunter-rs-download-screenshot = hihunter.run:run_rs_download_screenshot",

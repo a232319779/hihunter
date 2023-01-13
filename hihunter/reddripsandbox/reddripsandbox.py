@@ -117,10 +117,10 @@ class ReddripSandbox(object):
         try:
             url = "https://sandbox.ti.qianxin.com/sandbox/api/v1/token/{token}/report".format(token=self.api_key)
             payload = [
-            {
-                "type": "file",
-                "value": report_id
-            }
+                {
+                    "type": "file",
+                    "value": report_id
+                }
             ]
             headers = {
                 'content-type': "application/json",
