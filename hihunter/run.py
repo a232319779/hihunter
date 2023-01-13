@@ -16,7 +16,7 @@ from datetime import datetime
 from hihunter.virustotal.virustotal import VirusTotal
 from hihunter.malwarebazaar.malwarebazaar import MalwareBazaar
 from hihunter.reddripsandbox.reddripsandbox import ReddripSandbox
-from hihunter.common.postgre_db import HiHunterDB, HiHunterRSDatas
+from hihunter.common.sqlite_db import HiHunterDB, HiHunterRSDatas
 from hihunter.common.common import parse_config
 
 config_help = 'config path. default value: ./hihunter_config.json'
@@ -52,8 +52,8 @@ def run_vt_filter():
     querys = []
     for query in vt_filter_config.get('querys', []):
         querys.append('{0} fs:{1}+ fs:{2}-'.format(query, utc_time_start, utc_time_end))
-    hhd = HiHunterDB(vt_filter_config)
-    hhd.contected()
+    db_name = vt_filter_config.get("sqlite_db_name", "hihunter.db")
+    hhd = HiHunterDB(db_name)
     limit = args.number
     for query in querys:
         query = quote(query)
@@ -142,8 +142,8 @@ def run_vt_download_auto():
     vt = VirusTotal(api_key=vt_filter_config.get('api_key'))
     quota_data = vt.api_key_statics()
     print(json.dumps(quota_data, indent=4))
-    hhd = HiHunterDB(vt_filter_config)
-    hhd.contected()
+    db_name = vt_filter_config.get("sqlite_db_name", "hihunter.db")
+    hhd = HiHunterDB(db_name)
     download_path = args.save_path
     file_type = args.file_type
     download_limit = args.number
@@ -221,8 +221,8 @@ def run_mb_upload():
     vt = VirusTotal(api_key=vt_filter_config.get('api_key'))
     quota_data = vt.api_key_statics()
     print(json.dumps(quota_data, indent=4))
-    hhd = HiHunterDB(vt_filter_config)
-    hhd.contected()
+    db_name = vt_filter_config.get("sqlite_db_name", "hihunter.db")
+    hhd = HiHunterDB(db_name)
     mb = MalwareBazaar(api_key=vt_filter_config.get('mb_api_key'))
     download_path = args.save_path
     file_type = args.file_type
@@ -265,8 +265,8 @@ def run_rs_upload():
         exit(0)
 
     vt_filter_config = parse_config(args.config_file)
-    hhd = HiHunterDB(vt_filter_config)
-    hhd.contected()
+    db_name = vt_filter_config.get("sqlite_db_name", "hihunter.db")
+    hhd = HiHunterDB(db_name)
     all_submit_sha1s = hhd.get_all_sha1s(HiHunterRSDatas)
     upload_path = args.save_path
     upload_number = args.number
@@ -318,8 +318,8 @@ def run_rs_update():
         exit(0)
 
     vt_filter_config = parse_config(args.config_file)
-    hhd = HiHunterDB(vt_filter_config)
-    hhd.contected()
+    db_name = vt_filter_config.get("sqlite_db_name", "hihunter.db")
+    hhd = HiHunterDB(db_name)
     sandbox_api_key = vt_filter_config.get('sandbox_api_key', '')
     rs = ReddripSandbox(api_key=sandbox_api_key)
     rs_update_limit = args.number
@@ -354,8 +354,8 @@ def run_rs_download_screenshot():
         exit(0)
 
     vt_filter_config = parse_config(args.config_file)
-    hhd = HiHunterDB(vt_filter_config)
-    hhd.contected()
+    db_name = vt_filter_config.get("sqlite_db_name", "hihunter.db")
+    hhd = HiHunterDB(db_name)
     sandbox_api_key = vt_filter_config.get('sandbox_api_key', '')
     rs = ReddripSandbox(api_key=sandbox_api_key)
     rs_update_limit = args.number
@@ -394,8 +394,8 @@ def run_create_table():
         exit(0)
 
     vt_filter_config = parse_config(args.config_file)
-    hhd = HiHunterDB(vt_filter_config)
-    hhd.contected()
+    db_name = vt_filter_config.get("sqlite_db_name", "hihunter.db")
+    hhd = HiHunterDB(db_name)
     hhd.create_table()
     # close session
     hhd.close()
