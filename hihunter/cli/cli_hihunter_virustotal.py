@@ -70,19 +70,9 @@ def parse_cmd():
     parser.add_argument(
         "-hk",
         "--hk",
-        help="指定下载文件的哈希值.不可与 -hf 参数一起使用,当设置本参数时,自动忽略 -hf参数.",
+        help="指定下载文件的哈希值.",
         type=str,
         dest="download_hash",
-        action="store",
-        default="",
-    )
-
-    parser.add_argument(
-        "-hf",
-        "--hash-file",
-        help="指定保存下载哈希值的文件,文本格式,每行一个哈希值.",
-        type=str,
-        dest="download_hash_file",
         action="store",
         default="",
     )
@@ -130,7 +120,22 @@ def virustotal_filter(config):
 
 
 def virustotal_download(config):
-    pass
+    virustotal_config = config.get("virustotal")
+    if not virustotal_config:
+        print("获取Virustotal配置参数错误.")
+        exit(0)
+    vt = VirusTotal(api_key=virustotal_config.get("api_key"))
+    download_dir = virustotal_config.get("download_dir")
+
+    download_hash = virustotal_config.get("download_hash")
+    if download_hash:
+        download_data = vt.download(download_hash, download_path=download_dir)
+        if download_data.get("status") != 10000:
+            print("{}下载Virustotal文件失败,失败原因: {}".format(Fore.RED, download_data.get("msg")))
+        else:
+            print("{}下载文件成功，文件保存路径：{}".format(Fore.GREEN, download_data.get("msg")))
+    else:
+        print("{}请指定需要下载的文件哈希.".format(Fore.CYAN))
 
 
 FUNC_MAPPING = {
@@ -149,13 +154,11 @@ def work(param):
     filter_number = param.get("filter_number")
     download_dir = param.get("download_dir")
     download_hash = param.get("download_hash")
-    download_hash_file = param.get("download_hash_file")
     config = parse_config(config_file)
     if filter_number:
         config["virustotal"]["filter_number"] = filter_number
         config["virustotal"]["download_dir"] = download_dir
         config["virustotal"]["download_hash"] = download_hash
-        config["virustotal"]["download_hash_file"] = download_hash_file
     FUNC_MAPPING[func](config)
 
 
@@ -172,7 +175,6 @@ def run():
         "func": args.func,
         "filter_number": 10,
         "download_dir": args.download_dir,
-        "download_hash": args.download_hash,
-        "download_hash_file": args.download_hash_file,
+        "download_hash": args.download_hash
     }
     work(param)
