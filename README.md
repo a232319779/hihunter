@@ -36,8 +36,9 @@ Virustotal使用情况如下:
 每小时请求次数: 467
 
 # download 输出结果
-nextb-hihunter-virustotal.exe -c "nextb_hihunter_config.json" -f download -hk 72aca0f5bc8a61384eb9be2a4d2c756e
-下载文件成功，文件保存路径：./downloads\72aca0f5bc8a61384eb9be2a4d2c756e
+nextb-hihunter-virustotal.exe -c "nextb_hihunter_config.json" -f download -hk 0b331b99595a863934c268ab1d1280e2
+./downloads\0b331b99595a863934c268ab1d1280e2: 100%|█████████████████████████████████████████████████████████| 13.8k/13.8k [00:00<00:00, 233kiB/s]
+下载文件成功，文件保存路径：./downloads\0b331b99595a863934c268ab1d1280e2
 
 # filter 输出结果
 nextb-hihunter-virustotal.exe -c "nextb_hihunter_config.json" -f filter -n 4
