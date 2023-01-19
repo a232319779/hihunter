@@ -124,7 +124,7 @@ def virustotal_filter(config):
     virustotal_config = config.get("virustotal")
     vt = VirusTotal(api_key=virustotal_config.get('api_key'))
     utc_time_end = int(time.time())
-    delay = virustotal_config.get('delay', 0)
+    delay = virustotal_config.get('filter_delay', 0)
     utc_time_start = utc_time_end - 3600 * 8 - 3600 * delay
     querys = []
     for query in virustotal_config.get('filter_querys', []):
