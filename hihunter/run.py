@@ -10,150 +10,17 @@
 import os
 import argparse
 import json
-import time
 from urllib.parse import quote
-from datetime import datetime
 from hihunter.virustotal.virustotal import VirusTotal
 from hihunter.malwarebazaar.malwarebazaar import MalwareBazaar
 from hihunter.reddripsandbox.reddripsandbox import ReddripSandbox
-from hihunter.common.postgre_db import HiHunterDB, HiHunterRSDatas
+from hihunter.common.sqlite_db import HiHunterDB, HiHunterRSDatas
 from hihunter.common.common import parse_config
 
 config_help = 'config path. default value: ./hihunter_config.json'
 dir_help = 'sample path. default value: ./files'
 number_help = 'process number. default value: 10'
 remove_help = "remove sample when upload finished. 0: not remove, other: remove, default value: 0"
-
-def run_vt_filter():
-    try:
-        epilog = "Use like: hihunter-vt-filter -c $config"
-        parser = argparse.ArgumentParser(prog='HiHunter virustotal data filter tool.',
-                                        description='Version 0.0.1',
-                                        epilog=epilog,
-                                        formatter_class=argparse.RawDescriptionHelpFormatter
-                                        )
-        parser.add_argument('-c', '--config', help=config_help,
-                            type=str, dest='config_file', action='store', default='./hihunter_config.json')
-        parser.add_argument('-n', '--number', help=number_help,
-                    type=int, dest='number', action='store', default=10)
-
-        args = parser.parse_args()
-    except Exception as e:
-        print('error: %s' % str(e))
-        exit(0)
-
-    vt_filter_config = parse_config(args.config_file)
-    vt = VirusTotal(api_key=vt_filter_config.get('api_key'))
-    quota_data = vt.api_key_statics()
-    print(json.dumps(quota_data, indent=4))
-    utc_time_end = int(time.time())
-    delay = vt_filter_config.get('delay', 0)
-    utc_time_start = utc_time_end - 3600 * 8 - 3600 * delay
-    querys = []
-    for query in vt_filter_config.get('querys', []):
-        querys.append('{0} fs:{1}+ fs:{2}-'.format(query, utc_time_start, utc_time_end))
-    hhd = HiHunterDB(vt_filter_config)
-    hhd.contected()
-    limit = args.number
-    for query in querys:
-        query = quote(query)
-        filter_data = vt.filter(query=query, limit=limit)
-        sample_datas = filter_data.get('data', {}).get('data', [])
-        print(json.dumps(sample_datas, indent=4))
-        hhd.add_vt_data(sample_datas)
-    
-    print('{}{}{}'.format(20*'-', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), 20 * '-'))
-    # close session
-    hhd.close()
-
-def run_vt_usage():
-    try:
-        epilog = "Use like: hihunter-vt-usage -c $config"
-        parser = argparse.ArgumentParser(prog='Virustotal api usage statics.',
-                                        description='Version 0.0.1',
-                                        epilog=epilog,
-                                        formatter_class=argparse.RawDescriptionHelpFormatter
-                                        )
-        parser.add_argument('-c', '--config', help=config_help,
-                            type=str, dest='config_file', action='store', default='./hihunter_config.json')
-
-        args = parser.parse_args()
-    except Exception as e:
-        print('error: %s' % str(e))
-        exit(0)
-
-    vt_filter_config = parse_config(args.config_file)
-    vt = VirusTotal(api_key=vt_filter_config.get('api_key'))
-    quota_data = vt.api_key_statics()
-    print(json.dumps(quota_data, indent=4))
-
-def run_vt_download():
-    try:
-        epilog = "Use like: hihunter-vt-download -c $config -d $save_path -k $hash"
-        parser = argparse.ArgumentParser(prog='Virustotal sample download tool.',
-                                        description='Version 0.0.1',
-                                        epilog=epilog,
-                                        formatter_class=argparse.RawDescriptionHelpFormatter
-                                        )
-        parser.add_argument('-c', '--config', help=config_help,
-                            type=str, dest='config_file', action='store', default='./hihunter_config.json')
-        parser.add_argument('-d', '--dir', help=dir_help,
-                            type=str, dest='save_path', action='store', default='./files')
-        parser.add_argument('-k', '--key', help='download sample hash',
-                    type=str, dest='key', action='store', default=None)
-
-        args = parser.parse_args()
-    except Exception as e:
-        print('error: %s' % str(e))
-        exit(0)
-
-    vt_filter_config = parse_config(args.config_file)
-    vt = VirusTotal(api_key=vt_filter_config.get('api_key'))
-    quota_data = vt.api_key_statics()
-    print(json.dumps(quota_data, indent=4))
-    download_path = args.save_path
-    file_sha1 = args.key
-    download_data = vt.download(file_sha1, download_path=download_path)
-    print(json.dumps(download_data, indent=4))
-
-def run_vt_download_auto():
-    try:
-        epilog = "Use like: hihunter-vt-download_auto -c $config -d $save_path"
-        parser = argparse.ArgumentParser(prog='Virustotal sample download from postgre tool.',
-                                        description='Version 0.0.1',
-                                        epilog=epilog,
-                                        formatter_class=argparse.RawDescriptionHelpFormatter
-                                        )
-        parser.add_argument('-c', '--config', help=config_help,
-                            type=str, dest='config_file', action='store', default='./hihunter_config.json')
-        parser.add_argument('-d', '--dir', help=dir_help,
-                            type=str, dest='save_path', action='store', default='./files')
-        parser.add_argument('-t', '--type', help='upload sample type, default value: "MS Word Document", support type: ["MS Word Document","Office Open XML Document","Email","Windows shortcut"]',
-                    type=str, dest='file_type', action='store', default='MS Word Document')
-        parser.add_argument('-n', '--number', help=number_help,
-                    type=int, dest='number', action='store', default=10)
-
-        args = parser.parse_args()
-    except Exception as e:
-        print('error: %s' % str(e))
-        exit(0)
-
-    vt_filter_config = parse_config(args.config_file)
-    vt = VirusTotal(api_key=vt_filter_config.get('api_key'))
-    quota_data = vt.api_key_statics()
-    print(json.dumps(quota_data, indent=4))
-    hhd = HiHunterDB(vt_filter_config)
-    hhd.contected()
-    download_path = args.save_path
-    file_type = args.file_type
-    download_limit = args.number
-    file_sha1s = hhd.get_mb_sha1s(file_type, download_limit)
-    for file_sha1 in file_sha1s:
-        if file_sha1:
-            download_data = vt.download(file_sha1, download_path=download_path)
-            print(json.dumps(download_data, indent=4))
-    # close session
-    hhd.close()
 
 def run_mb_upload():
     try:
@@ -221,8 +88,8 @@ def run_mb_upload():
     vt = VirusTotal(api_key=vt_filter_config.get('api_key'))
     quota_data = vt.api_key_statics()
     print(json.dumps(quota_data, indent=4))
-    hhd = HiHunterDB(vt_filter_config)
-    hhd.contected()
+    db_name = vt_filter_config.get("sqlite_db_name", "hihunter.db")
+    hhd = HiHunterDB(db_name)
     mb = MalwareBazaar(api_key=vt_filter_config.get('mb_api_key'))
     download_path = args.save_path
     file_type = args.file_type
@@ -265,8 +132,8 @@ def run_rs_upload():
         exit(0)
 
     vt_filter_config = parse_config(args.config_file)
-    hhd = HiHunterDB(vt_filter_config)
-    hhd.contected()
+    db_name = vt_filter_config.get("sqlite_db_name", "hihunter.db")
+    hhd = HiHunterDB(db_name)
     all_submit_sha1s = hhd.get_all_sha1s(HiHunterRSDatas)
     upload_path = args.save_path
     upload_number = args.number
@@ -318,8 +185,8 @@ def run_rs_update():
         exit(0)
 
     vt_filter_config = parse_config(args.config_file)
-    hhd = HiHunterDB(vt_filter_config)
-    hhd.contected()
+    db_name = vt_filter_config.get("sqlite_db_name", "hihunter.db")
+    hhd = HiHunterDB(db_name)
     sandbox_api_key = vt_filter_config.get('sandbox_api_key', '')
     rs = ReddripSandbox(api_key=sandbox_api_key)
     rs_update_limit = args.number
@@ -354,8 +221,8 @@ def run_rs_download_screenshot():
         exit(0)
 
     vt_filter_config = parse_config(args.config_file)
-    hhd = HiHunterDB(vt_filter_config)
-    hhd.contected()
+    db_name = vt_filter_config.get("sqlite_db_name", "hihunter.db")
+    hhd = HiHunterDB(db_name)
     sandbox_api_key = vt_filter_config.get('sandbox_api_key', '')
     rs = ReddripSandbox(api_key=sandbox_api_key)
     rs_update_limit = args.number
@@ -394,8 +261,8 @@ def run_create_table():
         exit(0)
 
     vt_filter_config = parse_config(args.config_file)
-    hhd = HiHunterDB(vt_filter_config)
-    hhd.contected()
+    db_name = vt_filter_config.get("sqlite_db_name", "hihunter.db")
+    hhd = HiHunterDB(db_name)
     hhd.create_table()
     # close session
     hhd.close()
