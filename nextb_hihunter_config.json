@@ -5,7 +5,8 @@
     "filter_querys": ["p:1+ p:10- tag:email"],
     "filter_number": 10,
     "download_dir": "./downloads",
-    "download_hash": ""
+    "download_hash": "",
+    "download_hash_file": ""
   },
   "database": {
     "sqlite_db_name": "hihunter_email.db"
