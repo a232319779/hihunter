@@ -10,9 +10,7 @@
 import os
 import argparse
 import json
-import time
 from urllib.parse import quote
-from datetime import datetime
 from hihunter.virustotal.virustotal import VirusTotal
 from hihunter.malwarebazaar.malwarebazaar import MalwareBazaar
 from hihunter.reddripsandbox.reddripsandbox import ReddripSandbox
@@ -23,48 +21,6 @@ config_help = 'config path. default value: ./hihunter_config.json'
 dir_help = 'sample path. default value: ./files'
 number_help = 'process number. default value: 10'
 remove_help = "remove sample when upload finished. 0: not remove, other: remove, default value: 0"
-
-def run_vt_filter():
-    try:
-        epilog = "Use like: hihunter-vt-filter -c $config"
-        parser = argparse.ArgumentParser(prog='HiHunter virustotal data filter tool.',
-                                        description='Version 0.0.1',
-                                        epilog=epilog,
-                                        formatter_class=argparse.RawDescriptionHelpFormatter
-                                        )
-        parser.add_argument('-c', '--config', help=config_help,
-                            type=str, dest='config_file', action='store', default='./hihunter_config.json')
-        parser.add_argument('-n', '--number', help=number_help,
-                    type=int, dest='number', action='store', default=10)
-
-        args = parser.parse_args()
-    except Exception as e:
-        print('error: %s' % str(e))
-        exit(0)
-
-    vt_filter_config = parse_config(args.config_file)
-    vt = VirusTotal(api_key=vt_filter_config.get('api_key'))
-    quota_data = vt.api_key_statics()
-    print(json.dumps(quota_data, indent=4))
-    utc_time_end = int(time.time())
-    delay = vt_filter_config.get('delay', 0)
-    utc_time_start = utc_time_end - 3600 * 8 - 3600 * delay
-    querys = []
-    for query in vt_filter_config.get('querys', []):
-        querys.append('{0} fs:{1}+ fs:{2}-'.format(query, utc_time_start, utc_time_end))
-    db_name = vt_filter_config.get("sqlite_db_name", "hihunter.db")
-    hhd = HiHunterDB(db_name)
-    limit = args.number
-    for query in querys:
-        query = quote(query)
-        filter_data = vt.filter(query=query, limit=limit)
-        sample_datas = filter_data.get('data', {}).get('data', [])
-        print(json.dumps(sample_datas, indent=4))
-        hhd.add_vt_data(sample_datas)
-    
-    print('{}{}{}'.format(20*'-', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), 20 * '-'))
-    # close session
-    hhd.close()
 
 def run_mb_upload():
     try:

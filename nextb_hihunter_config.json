@@ -1,13 +1,13 @@
 {
   "virustotal": {
     "api_key": "",
-    "request_delay": 1,
+    "filter_delay": 1,
     "filter_querys": ["p:1+ p:10- tag:email"],
     "filter_number": 10,
     "download_dir": "./downloads",
     "download_hash": ""
   },
   "database": {
-    "sqlite_db_name": ""
+    "sqlite_db_name": "hihunter_email.db"
   }
 }

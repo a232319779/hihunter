@@ -23,8 +23,8 @@ $ pip install hihunter
 ### 3.1 nextb-hihunter-virustotal命令行的输出结果
 
 ```
-# usage输出结果
-nextb-hihunter-virustotal.exe -c "./nextb_hihunter_config.json" -f usage
+# usage 输出结果
+nextb-hihunter-virustotal.exe -c "nextb_hihunter_config.json" -f usage
 Virustotal使用情况如下:
 本日已请求次数: 3148
 每日请求次数上限: 30000
@@ -34,6 +34,22 @@ Virustotal使用情况如下:
 本月已使用比例: 0.27643655913978493
 每分钟请求次数: 10000
 每小时请求次数: 467
+
+# download 输出结果
+nextb-hihunter-virustotal.exe -c "nextb_hihunter_config.json" -f download -hk 72aca0f5bc8a61384eb9be2a4d2c756e
+下载文件成功，文件保存路径：./downloads\72aca0f5bc8a61384eb9be2a4d2c756e
+
+# filter 输出结果
+nextb-hihunter-virustotal.exe -c "nextb_hihunter_config.json" -f filter -n 4
++----------------------------------+------------------------+----------+--------------------+
+|             文件md5              |        威胁标签        | positive |     提交文件名       |
++----------------------------------+------------------------+----------+--------------------+
+| d710e95ae12def06be68a4a432ceac48 |     trojan.hidden      |    16    |  SWIFT $140,043.   |
+| bc853bdf4fbb7603ec1f23710f167236 |     trojan.hidden      |    13    |  SWIFT $140,043.   |
+| 72aca0f5bc8a61384eb9be2a4d2c756e |                        |    0     |  C8F5220D0C2.A01   |
+| 0912d2ce810815e9684393af97b70e7f |                        |    0     |  phish_alert_sp2   |
++----------------------------------+------------------------+----------+--------------------+
+--------------------2023-01-19 21:02:14--------------------
 ```
 
 ## 四、配置文件
@@ -43,7 +59,7 @@ Virustotal使用情况如下:
   // virustotal配置参数
   "virustotal": {
     "api_key": "",                                  // virustotal的api_key
-    "request_delay": 1,                             // 每次请求延迟时间
+    "filter_delay": 1,                              // 起始时间，默认最近1个小时前开始
     "filter_querys": ["p:1+ p:10- tag:email"],      // virustotal的筛选条件
     "filter_number": 10,                            // 每次筛选返回的数量
     "download_dir": "./downloads",                  // 样本下载保存目录
