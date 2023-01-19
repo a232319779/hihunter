@@ -6,4 +6,4 @@
 # @Software : Visual Studio Code
 # @WeChat   : NextB
 
-NEXTB_HIHUNTER_VERSION = "1.0.0"
+NEXTB_HIHUNTER_VERSION = "1.0.6"
