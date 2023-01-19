@@ -60,6 +60,7 @@ class HiHunterDB:
         self.engine = create_engine(conn_str)
         self.session_maker = None
         self.create_session()
+        self.create_table()
 
     def create_session(self):
         """

@@ -7,12 +7,17 @@
 # @WeChat   : NextB
 
 
+import time
 import argparse
+from datetime import datetime
 from colorama import Fore
 from colorama import init
+from urllib.parse import quote
+from prettytable import PrettyTable
 from hihunter.version import NEXTB_HIHUNTER_VERSION
 from hihunter.common.common import parse_config
 from hihunter.virustotal.virustotal import VirusTotal
+from hihunter.common.sqlite_db import HiHunterDB
 
 
 def parse_cmd():
@@ -116,7 +121,37 @@ def virustotal_usage(config):
 
 
 def virustotal_filter(config):
-    pass
+    virustotal_config = config.get("virustotal")
+    vt = VirusTotal(api_key=virustotal_config.get('api_key'))
+    utc_time_end = int(time.time())
+    delay = virustotal_config.get('delay', 0)
+    utc_time_start = utc_time_end - 3600 * 8 - 3600 * delay
+    querys = []
+    for query in virustotal_config.get('filter_querys', []):
+        querys.append('{0} fs:{1}+ fs:{2}-'.format(query, utc_time_start, utc_time_end))
+    database = config.get("database")
+    db_name = database.get("sqlite_db_name", "NextBHihunter.db")
+    hhd = HiHunterDB(db_name)
+    limit = virustotal_config.get("filter_number")
+    emails = list()
+    for query in querys:
+        query = quote(query)
+        filter_data = vt.filter(query=query, limit=limit)
+        sample_datas = filter_data.get('data', {}).get('data', [])
+        hhd.add_vt_data(sample_datas)
+        for sd in sample_datas:
+            tmp = list()
+            tmp.append(sd.get("md5"))
+            tmp.append(sd.get("suggested_threat_label"))
+            tmp.append(sd.get("positive"))
+            tmp.append(sd.get("names")[:15])
+            emails.append(tmp)
+    hhd.close()
+    x = PrettyTable()
+    x.field_names = ["文件md5", "威胁标签", "positive", "提交文件名"]
+    x.add_rows(emails)
+    print(x)
+    print('{}{}{}'.format(20*'-', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), 20 * '-'))
 
 
 def virustotal_download(config):
