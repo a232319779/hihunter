@@ -54,6 +54,7 @@ class VirusTotal(object):
             data['api_requests_minly'] = int(self.__get_quota_data__(res_json, 'api_requests_hourly', False) / 60)
             data['api_requests_daily_used'] = self.__get_quota_data__(res_json, 'api_requests_daily')
             data['api_requests_daily'] = self.__get_quota_data__(res_json, 'api_requests_daily', False)
+            data['api_requests_daily_used_ratio'] = data['api_requests_daily_used'] / data['api_requests_daily']
             return return_data(10000, 'query success', data)
         except Exception as e:
             return return_data(10001, str(e), {})

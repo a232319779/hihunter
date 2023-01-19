@@ -1,8 +1,0 @@
-{
-  "api_key": "",
-  "querys": ["tag:email"],
-  "delay": 1,
-  "sqlite_db_name": "",
-  "mb_api_key": "",
-  "sandbox_api_key": ""
-}
