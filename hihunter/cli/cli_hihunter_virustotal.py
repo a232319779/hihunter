@@ -14,6 +14,7 @@ from colorama import Fore
 from colorama import init
 from urllib.parse import quote
 from prettytable import PrettyTable
+from tqdm import tqdm
 from hihunter.version import NEXTB_HIHUNTER_VERSION
 from hihunter.common.common import parse_config
 from hihunter.virustotal.virustotal import VirusTotal
@@ -74,10 +75,19 @@ def parse_cmd():
 
     parser.add_argument(
         "-hk",
-        "--hk",
-        help="指定下载文件的哈希值.",
+        "--hash-key",
+        help="指定下载文件的哈希值,当使用此参数时,自动忽略 -hf 参数.",
         type=str,
         dest="download_hash",
+        action="store",
+        default="",
+    )
+    parser.add_argument(
+        "-hf",
+        "--hash-file",
+        help="指定哈希值列表文件.",
+        type=str,
+        dest="download_hash_file",
         action="store",
         default="",
     )
@@ -161,16 +171,28 @@ def virustotal_download(config):
         exit(0)
     vt = VirusTotal(api_key=virustotal_config.get("api_key"))
     download_dir = virustotal_config.get("download_dir")
-
     download_hash = virustotal_config.get("download_hash")
+    download_hash_file = virustotal_config.get("download_hash_file")
     if download_hash:
         download_data = vt.download(download_hash, download_path=download_dir)
         if download_data.get("status") != 10000:
             print("{}下载Virustotal文件失败,失败原因: {}".format(Fore.RED, download_data.get("msg")))
         else:
             print("{}下载文件成功，文件保存路径：{}".format(Fore.GREEN, download_data.get("msg")))
+    elif download_hash_file:
+        with open(download_hash_file, "r", encoding="utf8") as f:
+            datas = f.readlines()
+        hashes = [d.strip() for d in datas if len(d) > 20]
+        failed_list = list()
+        for download_hash in tqdm(hashes, desc="下载数量"):
+            download_data = vt.download(download_hash, download_path=download_dir)
+            if download_data.get("status") != 10000:
+                failed_list.append("{}{}下载失败,失败原因: {}".format(Fore.RED, download_hash, download_data.get("msg")))
+            time.sleep(3)
+        for failed in failed_list:
+            print(failed)
     else:
-        print("{}请指定需要下载的文件哈希.".format(Fore.CYAN))
+        print("{}请指定需要下载的文件哈希或者哈希列表.".format(Fore.CYAN))
 
 
 FUNC_MAPPING = {
@@ -189,11 +211,13 @@ def work(param):
     filter_number = param.get("filter_number")
     download_dir = param.get("download_dir")
     download_hash = param.get("download_hash")
+    download_hash_file = param.get("download_hash_file")
     config = parse_config(config_file)
     if filter_number:
         config["virustotal"]["filter_number"] = filter_number
         config["virustotal"]["download_dir"] = download_dir
         config["virustotal"]["download_hash"] = download_hash
+        config["virustotal"]["download_hash_file"] = download_hash_file
     FUNC_MAPPING[func](config)
 
 
@@ -210,6 +234,7 @@ def run():
         "func": args.func,
         "filter_number": 10,
         "download_dir": args.download_dir,
-        "download_hash": args.download_hash
+        "download_hash": args.download_hash,
+        "download_hash_file": args.download_hash_file
     }
     work(param)

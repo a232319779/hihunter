@@ -64,7 +64,8 @@ nextb-hihunter-virustotal.exe -c "nextb_hihunter_config.json" -f filter -n 4
     "filter_querys": ["p:1+ p:10- tag:email"],      // virustotal的筛选条件
     "filter_number": 10,                            // 每次筛选返回的数量
     "download_dir": "./downloads",                  // 样本下载保存目录
-    "download_hash": ""                             // 样本哈希
+    "download_hash": "",                            // 样本哈希
+    "download_hash_file": ""                        // 样本哈希列表文件，每行一个哈希值
   },
   "database": {
     "sqlite_db_name": "./NextBHihunter.db"          // 保存筛选样本的sqlite数据库名称
