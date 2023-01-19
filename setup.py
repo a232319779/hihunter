@@ -54,15 +54,7 @@ do_setup(
     packages=setuptools.find_packages(exclude=["tests"]),
     entry_points={
         "console_scripts": [
-            "hihunter-vt-filter = hihunter.run:run_vt_filter",
-            "hihunter-vt-usage = hihunter.run:run_vt_usage",
-            "hihunter-vt-download = hihunter.run:run_vt_download",
-            "hihunter-mb-upload = hihunter.run:run_mb_upload",
-            "hihunter-mb-upload2 = hihunter.run:run_mb_upload2",
-            "hihunter-rs-upload = hihunter.run:run_rs_upload",
-            "hihunter-rs-update = hihunter.run:run_rs_update",
-            "hihunter-rs-download-screenshot = hihunter.run:run_rs_download_screenshot",
-            "hihunter-create-pg-table = hihunter.run:run_create_table",
+            "nextb-hihunter-virustotal = hihunter.cli.cli_hihunter_virustotal:run",
         ]
     },
     classifiers=[
@@ -75,7 +67,8 @@ do_setup(
     license="MIT",
     include_package_data=True,
     install_requires=[
-        "requests==2.27.1",
-        "SQLAlchemy==1.4.31",
+        "requests",
+        "SQLAlchemy",
+        "colorama"
     ],
 )
