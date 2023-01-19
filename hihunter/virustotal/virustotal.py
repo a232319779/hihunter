@@ -11,6 +11,7 @@ import os
 import requests
 import calendar
 import datetime
+from tqdm import tqdm
 from hihunter.common.common import *
 
 
@@ -138,7 +139,7 @@ class VirusTotal(object):
         except Exception as e:
             return return_data(10002, str(e), {})
 
-    def download(self, hash, download_path="./"):
+    def download(self, hash, download_path="./", chunk_size=1024):
         """
         下载样本
         """
@@ -150,14 +151,28 @@ class VirusTotal(object):
 
             headers = {"Accept": "application/json", "x-apikey": self.api_key}
 
-            response = requests.request("GET", url, headers=headers)
+            response = requests.get(url, headers=headers, stream=True)
             if not os.path.exists(download_path):
                 os.mkdir(download_path)
             file_name = os.path.join(download_path, hash)
-            if response.content:
-                with open(file_name, "wb") as f:
-                    f.write(response.content)
+            # 引入进度条
+            total = int(response.headers.get('content-length', 0))
+            if total:
+                with open(file_name, 'wb') as file, tqdm(
+                    desc=hash,
+                    total=total,
+                    unit='iB',
+                    unit_scale=True,
+                    unit_divisor=1024,
+                ) as bar:
+                    for data in response.iter_content(chunk_size=chunk_size):
+                        size = file.write(data)
+                        bar.update(size)
                 return return_data(10000, file_name, data)
+            # if response.content:
+            #     with open(file_name, "wb") as f:
+            #         f.write(response.content)
+            #     return return_data(10000, file_name, data)
             return return_data(10101, response.text, data)
         except Exception as e:
             return return_data(10003, str(e), data)

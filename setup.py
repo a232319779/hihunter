@@ -69,6 +69,7 @@ do_setup(
     install_requires=[
         "requests",
         "SQLAlchemy",
-        "colorama"
+        "colorama",
+        "tqdm"
     ],
 )
