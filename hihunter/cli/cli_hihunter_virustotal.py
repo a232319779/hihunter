@@ -10,13 +10,13 @@
 import time
 import argparse
 from datetime import datetime
-from colorama import Fore
-from colorama import init
+from colorama import Fore, Style
 from urllib.parse import quote
 from prettytable import PrettyTable
 from tqdm import tqdm
 from hihunter.version import NEXTB_HIHUNTER_VERSION
 from hihunter.common.common import parse_config
+from hihunter.common.constant import VIRUSTOTAL_FIELDS_NAME_MAP
 from hihunter.virustotal.virustotal import VirusTotal
 from hihunter.common.sqlite_db import HiHunterDB
 
@@ -106,39 +106,46 @@ def virustotal_usage(config):
     data = vt.api_key_statics()
     if data.get("status") != 10000:
         print("查询Virustotal失败,失败原因: {}".format(data.get("msg")))
+        exit(0)
     statics_data = data.get("data")
-    api_requests_used_ratio = statics_data.get("api_requests_used_ratio", 1.0)
-    api_requests_daily_used_ratio = statics_data.get(
-        "api_requests_daily_used_ratio", 1.0
-    )
-    color = Fore.CYAN
-    m_color = Fore.GREEN
-    if api_requests_used_ratio > 0.5:
-        m_color = Fore.RED
-    d_color = Fore.GREEN
-    if api_requests_daily_used_ratio > 0.5:
-        d_color = Fore.RED
-
-    print("{}Virustotal使用情况如下: ".format(color))
-    print("{}本日已请求次数: {}".format(d_color, statics_data.get("api_requests_daily_used")))
-    print("{}每日请求次数上限: {}".format(d_color, statics_data.get("api_requests_daily")))
-    print("{}本日已使用比例: {}".format(d_color, api_requests_daily_used_ratio))
-    print("{}本月已请求次数: {}".format(m_color, statics_data.get("api_requests_used")))
-    print("{}每月请求次数上限: {}".format(m_color, statics_data.get("api_requests_total")))
-    print("{}本月已使用比例: {}".format(m_color, api_requests_used_ratio))
-    print("{}每分钟请求次数: {}".format(color, statics_data.get("api_requests_minly")))
-    print("{}每小时请求次数: {}".format(color, statics_data.get("api_requests_hourly_used")))
+    rows = list()
+    for key, name in VIRUSTOTAL_FIELDS_NAME_MAP.items():
+        value = statics_data.get(key, {})
+        row = list()
+        row.append(name)
+        for role in ["group", "user"]:
+            value_data = value.get(role, {})
+            used = value_data.get("used", 0)
+            allowed = value_data.get("allowed", 0)
+            ratio_str = "%s%.2f%s" % (Fore.GREEN, 0, Style.RESET_ALL)
+            if allowed != 0:
+                ratio = used / allowed
+                if ratio < 0.5:
+                    ratio_str = "%s%.2f%s" % (Fore.GREEN, ratio, Style.RESET_ALL)
+                else:
+                    ratio_str = "%s%.2f%s" % (Fore.RED, ratio, Style.RESET_ALL)
+            row.append(used)
+            row.append(allowed)
+            row.append(ratio_str)
+        # 排除全0的
+        if row[1:3] == [0, 0] and row[4:6] == [0, 0]:
+            continue
+        rows.append(row)
+    x = PrettyTable()
+    x.field_names = ["字段名称", "团队使用", "团队上限", "团队使用率", "个人使用", "个人上限", "个人使用率"]
+    x.add_rows(rows)
+    print(x)
 
 
 def virustotal_filter(config):
     virustotal_config = config.get("virustotal")
-    vt = VirusTotal(api_key=virustotal_config.get('api_key'))
+    vt = VirusTotal(api_key=virustotal_config.get("api_key"))
     utc_time_end = int(time.time())
-    delay = virustotal_config.get('filter_delay', 0)
+    delay = virustotal_config.get("filter_delay", 0)
     utc_time_start = utc_time_end - 3600 * 8 - 3600 * delay
     querys = []
-    for query in virustotal_config.get('filter_querys', []):
-        querys.append('{0} fs:{1}+ fs:{2}-'.format(query, utc_time_start, utc_time_end))
+    for query in virustotal_config.get("filter_querys", []):
+        querys.append("{0} fs:{1}+ fs:{2}-".format(query, utc_time_start, utc_time_end))
     database = config.get("database")
     db_name = database.get("sqlite_db_name", "NextBHihunter.db")
     hhd = HiHunterDB(db_name)
@@ -147,7 +154,7 @@ def virustotal_filter(config):
     for query in querys:
         query = quote(query)
         filter_data = vt.filter(query=query, limit=limit)
-        sample_datas = filter_data.get('data', {}).get('data', [])
+        sample_datas = filter_data.get("data", {}).get("data", [])
         hhd.add_vt_data(sample_datas)
         for sd in sample_datas:
             tmp = list()
@@ -161,7 +168,11 @@ def virustotal_filter(config):
     x.field_names = ["文件md5", "威胁标签", "positive", "提交文件名"]
     x.add_rows(emails)
     print(x)
-    print('{}{}{}'.format(20*'-', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), 20 * '-'))
+    print(
+        "{}{}{}".format(
+            20 * "-", datetime.now().strftime("%Y-%m-%d %H:%M:%S"), 20 * "-"
+        )
+    )
 
 
 def virustotal_download(config):
@@ -176,9 +187,17 @@ def virustotal_download(config):
     if download_hash:
         download_data = vt.download(download_hash, download_path=download_dir)
         if download_data.get("status") != 10000:
-            print("{}下载Virustotal文件失败,失败原因: {}".format(Fore.RED, download_data.get("msg")))
+            print(
+                "{}下载Virustotal文件失败,失败原因: {}{}".format(
+                    Fore.RED, download_data.get("msg"), Style.RESET_ALL
+                )
+            )
         else:
-            print("{}下载文件成功，文件保存路径：{}".format(Fore.GREEN, download_data.get("msg")))
+            print(
+                "{}下载文件成功，文件保存路径：{}{}".format(
+                    Fore.GREEN, download_data.get("msg"), Style.RESET_ALL
+                )
+            )
     elif download_hash_file:
         with open(download_hash_file, "r", encoding="utf8") as f:
             datas = f.readlines()
@@ -187,12 +206,19 @@ def virustotal_download(config):
         for download_hash in tqdm(hashes, desc="下载数量"):
             download_data = vt.download(download_hash, download_path=download_dir)
             if download_data.get("status") != 10000:
-                failed_list.append("{}{}下载失败,失败原因: {}".format(Fore.RED, download_hash, download_data.get("msg")))
+                failed_list.append(
+                    "{}{}下载失败,失败原因: {}{}".format(
+                        Fore.RED,
+                        download_hash,
+                        download_data.get("msg"),
+                        Style.RESET_ALL,
+                    )
+                )
             time.sleep(3)
         for failed in failed_list:
             print(failed)
     else:
-        print("{}请指定需要下载的文件哈希或者哈希列表.".format(Fore.CYAN))
+        print("{}请指定需要下载的文件哈希或者哈希列表.{}".format(Fore.CYAN, Style.RESET_ALL))
 
 
 FUNC_MAPPING = {
@@ -221,9 +247,6 @@ def work(param):
     FUNC_MAPPING[func](config)
 
 
-init(autoreset=True)
-
-
 def run():
     """
     CLI命令行入口
@@ -235,6 +258,6 @@ def run():
         "filter_number": 10,
         "download_dir": args.download_dir,
         "download_hash": args.download_hash,
-        "download_hash_file": args.download_hash_file
+        "download_hash_file": args.download_hash_file,
     }
     work(param)
