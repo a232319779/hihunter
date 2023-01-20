@@ -15,7 +15,7 @@ from urllib.parse import quote
 from prettytable import PrettyTable
 from tqdm import tqdm
 from hihunter.version import NEXTB_HIHUNTER_VERSION
-from hihunter.common.common import parse_config
+from hihunter.common.common import parse_config, get_file_names
 from hihunter.common.constant import VIRUSTOTAL_FIELDS_NAME_MAP
 from hihunter.virustotal.virustotal import VirusTotal
 from hihunter.common.sqlite_db import HiHunterDB
@@ -184,7 +184,12 @@ def virustotal_download(config):
     download_dir = virustotal_config.get("download_dir")
     download_hash = virustotal_config.get("download_hash")
     download_hash_file = virustotal_config.get("download_hash_file")
+    exist_files = get_file_names(download_dir)
     if download_hash:
+        # 遇到同名文件则跳过
+        if download_hash in exist_files:
+            print("{}{}文件已存在,跳过下载.{}".format(Fore.GREEN, download_hash, Style.RESET_ALL))
+            exit(0)
         download_data = vt.download(download_hash, download_path=download_dir)
         if download_data.get("status") != 10000:
             print(
@@ -204,6 +209,10 @@ def virustotal_download(config):
         hashes = [d.strip() for d in datas if len(d) > 20]
         failed_list = list()
         for download_hash in tqdm(hashes, desc="下载数量"):
+            # 遇到同名文件则跳过
+            if download_hash in exist_files:
+                failed_list.append("{}{}文件已存在,跳过下载.{}".format(Fore.GREEN, download_hash, Style.RESET_ALL))
+                continue
             download_data = vt.download(download_hash, download_path=download_dir)
             if download_data.get("status") != 10000:
                 failed_list.append(
@@ -215,6 +224,7 @@ def virustotal_download(config):
                     )
                 )
             time.sleep(3)
+        failed_list.sort()
         for failed in failed_list:
             print(failed)
     else:
