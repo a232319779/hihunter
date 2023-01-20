@@ -9,8 +9,6 @@
 
 import os
 import requests
-import calendar
-import datetime
 from tqdm import tqdm
 from hihunter.common.common import *
 
@@ -18,19 +16,6 @@ from hihunter.common.common import *
 class VirusTotal(object):
     def __init__(self, api_key=None):
         self.api_key = api_key
-
-    def __get_quota_data__(self, js_data, key_name, used=True):
-        data = js_data.get("data", {}).get(key_name, {})
-        if "group" in data.keys():
-            if used:
-                return data.get("group", {}).get("used", -1)
-            else:
-                return data.get("group", {}).get("allowed", -1)
-        else:
-            if used:
-                return data.get("user", {}).get("used", -1)
-            else:
-                return data.get("user", {}).get("allowed", -1)
 
     def api_key_statics(self):
         """
@@ -44,37 +29,11 @@ class VirusTotal(object):
             )
 
             headers = {"Accept": "application/json", "x-apikey": self.api_key}
-            response = requests.request("GET", url, headers=headers)
-            res_json = response.json()
-            data = dict()
-            today = datetime.datetime.today()
-            _, month_len = calendar.monthrange(today.year, today.month)
-            data["api_requests_used"] = self.__get_quota_data__(
-                res_json, "api_requests_monthly"
-            )
-            data["api_requests_total"] = (
-                self.__get_quota_data__(res_json, "api_requests_daily", False)
-                * month_len
-            )
-            data["api_requests_used_ratio"] = (
-                data["api_requests_used"] / data["api_requests_total"]
-            )
-            data["api_requests_hourly_used"] = self.__get_quota_data__(
-                res_json, "api_requests_hourly"
-            )
-            data["api_requests_minly"] = int(
-                self.__get_quota_data__(res_json, "api_requests_hourly", False) / 60
-            )
-            data["api_requests_daily_used"] = self.__get_quota_data__(
-                res_json, "api_requests_daily"
-            )
-            data["api_requests_daily"] = self.__get_quota_data__(
-                res_json, "api_requests_daily", False
-            )
-            data["api_requests_daily_used_ratio"] = (
-                data["api_requests_daily_used"] / data["api_requests_daily"]
-            )
-            return return_data(10000, "query success", data)
+            response = requests.get(url, headers=headers)
+            if response.status_code == 200:
+                res_json = response.json()
+                return return_data(10000, "query usage success.", res_json.get("data", {}))
+            return return_data(10001, "query usage failed.", {})
         except Exception as e:
             return return_data(10001, str(e), {})
 
@@ -156,12 +115,12 @@ class VirusTotal(object):
                 os.mkdir(download_path)
             file_name = os.path.join(download_path, hash)
             # 引入进度条
-            total = int(response.headers.get('content-length', 0))
+            total = int(response.headers.get("content-length", 0))
             if total:
-                with open(file_name, 'wb') as file, tqdm(
+                with open(file_name, "wb") as file, tqdm(
                     desc=hash,
                     total=total,
-                    unit='iB',
+                    unit="iB",
                     unit_scale=True,
                     unit_divisor=1024,
                 ) as bar:
